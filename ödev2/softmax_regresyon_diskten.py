@@ -1,18 +1,12 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
-import os
+import torchvision
+import torchvision.transforms as transforms
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from d2l import torch as d2l
 from IPython.display import display, clear_output
-
-# Veri dizini
-dataset_dir = r"C:\Users\kh\PycharmProjects\ysa1\fashion_mnist\FashionMNIST\acikhali2"
-
-# Eğitim ve test klasörleri
-train_dir = os.path.join(dataset_dir, "train")
-test_dir = os.path.join(dataset_dir, "test")
 
 # Sınıf isimleri
 class_names = [
@@ -20,45 +14,19 @@ class_names = [
     "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"
 ]
 
+# **Veri Setini Yükleme**
+# Fashion MNIST veri setini indir ve yükle
+transform = transforms.Compose([
+    transforms.ToTensor(),  # Görüntüleri tensöre dönüştür ve normalize et (0-1 aralığına)
+])
 
-# **Özel PyTorch Dataset Sınıfı**
-class FashionMNISTDataset(Dataset):
-    def __init__(self, image_folder):
-        self.image_folder = image_folder
-        self.images = []
-        self.labels = []
-
-        labels_path = os.path.join(image_folder, "labels.txt")
-
-        with open(labels_path, "r") as f:
-            lines = f.readlines()
-
-        for line in lines:
-            parts = line.strip().split()
-            image_name, label = parts[0], int(parts[1])  # Sadece ilk iki sütunu al
-            image_path = os.path.join(image_folder, image_name)
-
-            self.images.append(image_path)
-            self.labels.append(label)
-
-        print(f"✅ {len(self.images)} görüntü yüklendi!")
-
-    def __len__(self):
-        return len(self.images)
-
-    def __getitem__(self, idx):
-        # Görüntüyü aç ve tensöre dönüştür
-        image = Image.open(self.images[idx]).convert("L")  # Grayscale
-        image = np.array(image, dtype=np.float32) / 255.0  # Normalize et
-        image = torch.tensor(image).unsqueeze(0)  # [1, 28, 28] şekline getir
-
-        label = self.labels[idx]
-        return image, label
-
-
-# Dataset'leri oluştur
-train_dataset = FashionMNISTDataset(train_dir)
-test_dataset = FashionMNISTDataset(test_dir)
+# Eğitim ve test veri setlerini yükle
+train_dataset = torchvision.datasets.FashionMNIST(
+    root="./data", train=True, download=True, transform=transform
+)
+test_dataset = torchvision.datasets.FashionMNIST(
+    root="./data", train=False, download=True, transform=transform
+)
 
 # DataLoader'ları tanımla
 batch_size = 128
@@ -175,7 +143,7 @@ lr = 0.001
 
 
 def updater(batch_size):
-    return d2l.sgd([W, b], lr, batch_size)#sgd algoritması uygulanıyor
+    return d2l.sgd([W, b], lr, batch_size)  # SGD algoritması uygulanıyor
 
 
 num_epochs = 10
